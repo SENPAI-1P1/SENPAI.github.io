@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENAPI — نظام الألعاب المتكامل</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #04050a;
+    --surface: #0b0d16;
+    --card: #0f1120;
+    --neon-cyan: #00f5ff;
+    --neon-green: #39ff14;
+    --neon-red: #ff2d55;
+    --neon-purple: #bf5af2;
+    --gold: #ffd60a;
+    --text: #e8eaf0;
+    --muted: #7a7e9a;
+    --border: rgba(0,245,255,0.12);
+    --glow-cyan: 0 0 20px rgba(0,245,255,0.4), 0 0 60px rgba(0,245,255,0.15);
+    --glow-green: 0 0 20px rgba(57,255,20,0.4), 0 0 60px rgba(57,255,20,0.15);
+    --glow-red: 0 0 20px rgba(255,45,85,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Scanlines overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 2; }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(4,5,10,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    padding: 0 32px;
+  }
+
+  .logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 0 12px rgba(0,245,255,0.5));
+  }
+
+  .logo span {
+    display: inline-block;
+    animation: logoFlicker 4s infinite;
+  }
+
+  @keyframes logoFlicker {
+    0%,95%,100% { opacity: 1; }
+    96% { opacity: 0.4; }
+    97% { opacity: 1; }
+    98% { opacity: 0.2; }
+    99% { opacity: 1; }
+  }
+
+  .nav-badge {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    color: var(--neon-cyan);
+    border: 1px solid var(--neon-cyan);
+    padding: 3px 10px;
+    text-transform: uppercase;
+    box-shadow: var(--glow-cyan);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { box-shadow: var(--glow-cyan); }
+    50% { box-shadow: 0 0 5px rgba(0,245,255,0.2); }
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 100px 24px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg-glow {
+    position: absolute;
+    width: 800px;
+    height: 800px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,245,255,0.06) 0%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 0.6; }
+    50% { transform: translate(-50%,-50%) scale(1.15); opacity: 1; }
+  }
+
+  .hero-tag {
+    display: inline-block;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--neon-green);
+    border-top: 1px solid var(--neon-green);
+    border-bottom: 1px solid var(--neon-green);
+    padding: 6px 20px;
+    margin-bottom: 32px;
+    box-shadow: 0 0 15px rgba(57,255,20,0.2);
+    animation: slideIn 0.8s ease-out;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(4rem, 12vw, 9rem);
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    line-height: 0.9;
+    margin-bottom: 8px;
+    animation: heroReveal 1s ease-out 0.2s both;
+  }
+
+  @keyframes heroReveal {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .hero-title .line1 {
+    display: block;
+    background: linear-gradient(135deg, #fff 30%, var(--neon-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 30px rgba(0,245,255,0.3));
+  }
+
+  .hero-title .line2 {
+    display: block;
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 30px rgba(57,255,20,0.3));
+    font-size: 0.45em;
+    letter-spacing: 0.4em;
+    margin-top: 4px;
+  }
+
+  .hero-subtitle {
+    font-size: 1.15rem;
+    color: var(--muted);
+    max-width: 600px;
+    margin: 24px auto 48px;
+    line-height: 1.8;
+    animation: fadeUp 1s ease-out 0.4s both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 48px;
+    margin-bottom: 56px;
+    animation: fadeUp 1s ease-out 0.6s both;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--neon-cyan);
+    filter: drop-shadow(0 0 8px var(--neon-cyan));
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .hero-btns {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    animation: fadeUp 1s ease-out 0.8s both;
+  }
+
+  .btn-primary {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 14px 36px;
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green));
+    color: #000;
+    border: none;
+    cursor: pointer;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    transition: all 0.2s;
+    box-shadow: 0 0 30px rgba(0,245,255,0.3);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 50px rgba(0,245,255,0.6);
+    filter: brightness(1.1);
+  }
+
+  .btn-secondary {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 13px 36px;
+    background: transparent;
+    color: var(--neon-cyan);
+    border: 1px solid var(--neon-cyan);
+    cursor: pointer;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover {
+    background: rgba(0,245,255,0.08);
+    box-shadow: var(--glow-cyan);
+    transform: translateY(-2px);
+  }
+
+  /* ─── SECTION HEADER ─── */
+  .section { padding: 100px 0; position: relative; z-index: 2; }
+
+  .sec-header {
+    text-align: center;
+    margin-bottom: 64px;
+  }
+
+  .sec-tag {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--neon-green);
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .sec-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 16px;
+  }
+
+  .sec-line {
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+    margin: 0 auto;
+    box-shadow: var(--glow-cyan);
+  }
+
+  /* ─── VERSION CARDS ─── */
+  .versions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+
+  @media (max-width: 768px) {
+    .versions-grid { grid-template-columns: 1fr; }
+  }
+
+  .version-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .version-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(0,245,255,0.3);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(0,245,255,0.1);
+  }
+
+  .version-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+  }
+
+  .version-card.android-card::before {
+    background: linear-gradient(90deg, var(--neon-green), var(--neon-purple));
+  }
+
+  .card-header {
+    padding: 36px 36px 0;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+
+  .card-icon {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    background: rgba(0,245,255,0.08);
+    border: 1px solid rgba(0,245,255,0.2);
+    flex-shrink: 0;
+  }
+
+  .android-card .card-icon {
+    background: rgba(57,255,20,0.08);
+    border-color: rgba(57,255,20,0.2);
+  }
+
+  .card-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  .card-subtitle {
+    font-size: 0.85rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    font-family: 'Rajdhani', sans-serif;
+    text-transform: uppercase;
+  }
+
+  .card-body { padding: 0 36px 36px; }
+
+  .specs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .spec-item {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 12px 16px;
+  }
+
+  .spec-key {
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-family: 'Rajdhani', sans-serif;
+  }
+
+  .spec-val {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--neon-cyan);
+  }
+
+  .android-card .spec-val { color: var(--neon-green); }
+
+  .features-list {
+    list-style: none;
+    margin-bottom: 32px;
+  }
+
+  .features-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 0.9rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .features-list li:last-child { border-bottom: none; }
+
+  .feat-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--neon-cyan);
+    margin-top: 6px;
+    flex-shrink: 0;
+    box-shadow: 0 0 8px var(--neon-cyan);
+  }
+
+  .android-card .feat-dot { background: var(--neon-green); box-shadow: 0 0 8px var(--neon-green); }
+
+  .dl-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 16px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-decoration: none;
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green));
+    color: #000;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+  }
+
+  .dl-btn:hover {
+    filter: brightness(1.15);
+    box-shadow: 0 0 40px rgba(0,245,255,0.4);
+    transform: translateY(-2px);
+  }
+
+  .android-card .dl-btn {
+    background: linear-gradient(135deg, var(--neon-green), var(--neon-purple));
+  }
+
+  .dl-btn:hover { transform: translateY(-2px); }
+
+  .size-tag {
+    display: inline-block;
+    margin-top: 10px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-align: center;
+    width: 100%;
+  }
+
+  /* ─── FEATURES SECTION ─── */
+  .features-section { background: var(--surface); }
+
+  .feat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  @media (max-width: 900px) { .feat-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { .feat-grid { grid-template-columns: 1fr; } }
+
+  .feat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 32px 28px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 0; height: 2px;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+    transition: width 0.3s;
+  }
+
+  .feat-card:hover::after { width: 100%; }
+
+  .feat-card:hover {
+    background: rgba(0,245,255,0.03);
+    border-color: rgba(0,245,255,0.2);
+  }
+
+  .feat-icon-wrap {
+    width: 52px;
+    height: 52px;
+    background: rgba(0,245,255,0.07);
+    border: 1px solid rgba(0,245,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+
+  .feat-card-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+    letter-spacing: 0.05em;
+  }
+
+  .feat-card-desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  /* ─── PERFORMANCE BAR ─── */
+  .perf-section {}
+
+  .perf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  @media (max-width: 768px) { .perf-grid { grid-template-columns: 1fr; } }
+
+  .perf-visual {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 36px;
+    position: relative;
+  }
+
+  .perf-visual::before {
+    content: 'PERFORMANCE MONITOR';
+    position: absolute;
+    top: -1px; left: 20px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--neon-cyan);
+    background: var(--card);
+    padding: 0 8px;
+  }
+
+  .bar-row { margin-bottom: 20px; }
+
+  .bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+  }
+
+  .bar-label span:last-child { color: var(--neon-cyan); }
+
+  .bar-track {
+    height: 6px;
+    background: rgba(255,255,255,0.05);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+    box-shadow: 0 0 10px rgba(0,245,255,0.4);
+    animation: barGrow 2s ease-out both;
+  }
+
+  @keyframes barGrow {
+    from { width: 0 !important; }
+  }
+
+  .perf-content {}
+
+  .perf-content h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 16px;
+    line-height: 1.3;
+  }
+
+  .perf-content p {
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 24px;
+    font-size: 0.95rem;
+  }
+
+  .perf-tags { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  .perf-tag {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1px solid rgba(0,245,255,0.3);
+    color: var(--neon-cyan);
+    background: rgba(0,245,255,0.05);
+  }
+
+  /* ─── SYSTEM REQUIREMENTS ─── */
+  .req-section { background: var(--surface); }
+
+  .req-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+  @media (max-width: 768px) { .req-grid { grid-template-columns: 1fr; } }
+
+  .req-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 32px;
+    position: relative;
+  }
+
+  .req-card::before {
+    content: attr(data-label);
+    position: absolute;
+    top: -1px; right: 20px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    background: var(--card);
+    padding: 0 8px;
+  }
+
+  .req-card[data-type="pc"]::before { color: var(--neon-cyan); }
+  .req-card[data-type="android"]::before { color: var(--neon-green); }
+
+  .req-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    letter-spacing: 0.05em;
+  }
+
+  .req-table { width: 100%; border-collapse: collapse; }
+
+  .req-table tr {
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .req-table td {
+    padding: 10px 0;
+    font-size: 0.88rem;
+    vertical-align: top;
+  }
+
+  .req-table td:first-child {
+    color: var(--muted);
+    width: 40%;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-top: 12px;
+  }
+
+  .req-table td:last-child { color: var(--text); line-height: 1.6; }
+
+  /* ─── FOOTER ─── */
+  footer {
+    position: relative;
+    z-index: 2;
+    border-top: 1px solid var(--border);
+    padding: 48px 0;
+    text-align: center;
+    background: var(--surface);
+  }
+
+  .footer-logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--neon-cyan), var(--neon-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 8px rgba(0,245,255,0.4));
+    margin-bottom: 12px;
+  }
+
+  .footer-tagline {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+
+  .footer-badges { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 32px; }
+
+  .f-badge {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--muted);
+  }
+
+  .footer-copy {
+    font-size: 0.8rem;
+    color: rgba(122,126,154,0.5);
+    letter-spacing: 0.05em;
+  }
+
+  /* ─── CORNER DECORATIONS ─── */
+  .corner-deco {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-color: var(--neon-cyan);
+    border-style: solid;
+  }
+
+  .corner-deco.tl { top: 16px; right: 16px; border-width: 1px 0 0 1px; }
+  .corner-deco.br { bottom: 16px; left: 16px; border-width: 0 1px 1px 0; }
+
+  /* ─── DOWNLOAD SECTION ─── */
+  .dl-section {
+    text-align: center;
+    padding: 80px 0;
+  }
+
+  .dl-big-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 12px;
+  }
+
+  .dl-big-sub {
+    color: var(--muted);
+    margin-bottom: 48px;
+    font-size: 1rem;
+  }
+
+  .dl-cards {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .dl-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 36px 40px;
+    text-align: center;
+    min-width: 240px;
+    position: relative;
+    transition: all 0.3s;
+  }
+
+  .dl-card:hover {
+    border-color: rgba(0,245,255,0.3);
+    transform: translateY(-4px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 40px rgba(0,245,255,0.08);
+  }
+
+  .dl-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .dl-card.pc::before { background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green)); }
+  .dl-card.android::before { background: linear-gradient(90deg, var(--neon-green), var(--neon-purple)); }
+
+  .dl-card-icon { font-size: 2.5rem; margin-bottom: 16px; display: block; }
+
+  .dl-card-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+
+  .dl-card-desc {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  .dl-card-size {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-top: 10px;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: rgba(0,245,255,0.3); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--neon-cyan); }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,245,255,0.2), transparent);
+    margin: 0;
+  }
+
+  /* animated counter */
+  .counter { display: inline-block; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <div class="logo"><span>SENAPI</span></div>
+    <div style="display:flex;gap:12px;align-items:center">
+      <div class="nav-badge">v1.0 — STABLE</div>
+      <div class="nav-badge" style="border-color:var(--neon-green);color:var(--neon-green);box-shadow:var(--glow-green)">GAMING</div>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-glow"></div>
+  <div style="position:relative;z-index:2">
+    <div class="hero-tag">⚡ نظام الألعاب المتكامل الخفيف</div>
+    <h1 class="hero-title">
+      <span class="line1">SENAPI</span>
+      <span class="line2">GAMING SYSTEM</span>
+    </h1>
+    <p class="hero-subtitle">
+      نظام موجه للألعاب بالكامل — خفيف الوزن، سريع الاستجابة، مُحسَّن لأعلى أداء ممكن
+      على جهاز الكمبيوتر والأندرويد معاً
+    </p>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-num">2x</div>
+        <div class="stat-label">أسرع من الأنظمة العادية</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">60%</div>
+        <div class="stat-label">توفير في الذاكرة</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">120+</div>
+        <div class="stat-label">إطار في الثانية</div>
+      </div>
+    </div>
+    <div class="hero-btns">
+      <a href="#download" class="btn-primary">⬇ تحميل الآن</a>
+      <a href="#features" class="btn-secondary">استكشف المميزات</a>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- VERSION CARDS -->
+<section class="section" id="versions">
+  <div class="container">
+    <div class="sec-header">
+      <span class="sec-tag">الإصدارات</span>
+      <h2 class="sec-title">نسختان — منصة واحدة</h2>
+      <div class="sec-line"></div>
+    </div>
+    <div class="versions-grid">
+
+      <!-- PC VERSION -->
+      <div class="version-card">
+        <div class="corner-deco tl"></div>
+        <div class="corner-deco br"></div>
+        <div class="card-header">
+          <div class="card-icon">🖥️</div>
+          <div>
+            <div class="card-title">SENAPI PC</div>
+            <div class="card-subtitle">Windows Edition — للكمبيوتر</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="specs-grid">
+            <div class="spec-item">
+              <div class="spec-key">الحجم</div>
+              <div class="spec-val">420 MB</div>
+            </div>
+            <div class="spec-item">
+              <div class="spec-key">نظام التشغيل</div>
+              <div class="spec-val">Win 10/11</div>
+            </div>
+            <div class="spec-item">
+              <div class="spec-key">المعمارية</div>
+              <div class="spec-val">x64 / ARM</div>
+            </div>
+            <div class="spec-item">
+              <div class="spec-key">الإصدار</div>
+              <div class="spec-val">1.0.0</div>
+            </div>
+          </div>
+          <ul class="features-list">
+            <li><span class="feat-dot"></span>محسّن لتعزيز الأداء في الألعاب — Game Boost Mode</li>
+            <li><span class="feat-dot"></span>إدارة ذكية للذاكرة RAM أثناء الجلسة</li>
+            <li><span class="feat-dot"></span>مراقبة حرارة المعالج والكارت بشكل مباشر</li>
+            <li><span class="feat-dot"></span>مشغّل ألعاب موحّد يدعم Steam و Epic</li>
+            <li><span class="feat-dot"></span>وضع عدم الإزعاج — يوقف كل الإشعارات</li>
+            <li><span class="feat-dot"></span>واجهة HUD مخصصة داخل الألعاب</li>
+            <li><span class="feat-dot"></span>تسجيل مقاطع الـ Gameplay تلقائياً</li>
+          </ul>
+          <a href="#" class="dl-btn" onclick="simulateDownload('PC', this)">
+            <span>⬇</span> تحميل SENAPI PC
+          </a>
+          <div class="size-tag">SENAPI_PC_v1.0_Setup.exe • 420 MB</div>
+        </div>
+      </div>
+
+      <!-- ANDROID VERSION -->
+      <div class="version-card android-card">
+        <div class="corner-deco tl" style="border-color:var(--neon-green)"></div>
+        <div class="corner-deco br" style="border-color:var(--neon-green)"></div>
+        <div class="card-header">
+          <div class="card-icon">📱</div>
+          <div>
+            <div class="card-title">SENAPI Android</div>
+            <div class="card-subtitle">Mobile Edition — للأندرويد</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="specs-grid">
+            <div class="spec-item">
+              <div class="spec-key">الحجم</div>
+              <div class="spec-val">85 MB</div>
+            </div>
+            <div class="spec-item">
+              <div class="spec-key">نظام التشغيل</div>
+              <div class="spec-val">Android 8+</div>
+            </div>
+            <div class="spec-item">
+              <div class="spec-key">المعمارية</div>
+              <div class="spec-val">ARM64</div>
+            </div>
+            <div class="spec-item">
+              <div class="spec-key">الإصدار</div>
+              <div class="spec-val">1.0.0</div>
+            </div>
+          </div>
+          <ul class="features-list">
+            <li><span class="feat-dot" style="background:var(--neon-green)"></span>وضع Gaming Mode يوقف العمليات الخلفية فوراً</li>
+            <li><span class="feat-dot" style="background:var(--neon-green)"></span>تحسين معدل اللمس والاستجابة Touch Boost</li>
+            <li><span class="feat-dot" style="background:var(--neon-green)"></span>إدارة درجة الحرارة لمنع الـ Throttling</li>
+            <li><span class="feat-dot" style="background:var(--neon-green)"></span>قفل الـ FPS للحفاظ على البطارية</li>
+            <li><span class="feat-dot" style="background:var(--neon-green)"></span>HUD خفيف لعرض FPS والحرارة</li>
+            <li><span class="feat-dot" style="background:var(--neon-green)"></span>حظر الإشعارات والمكالمات أثناء اللعب</li>
+            <li><span class="feat-dot" style="background:var(--neon-green)"></span>تسريع الشبكة وتقليل الـ Ping</li>
+          </ul>
+          <a href="#" class="dl-btn" style="background:linear-gradient(135deg,var(--neon-green),var(--neon-purple))" onclick="simulateDownload('Android', this)">
+            <span>⬇</span> تحميل SENAPI Android
+          </a>
+          <div class="size-tag">SENAPI_Android_v1.0.apk • 85 MB</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section features-section" id="features">
+  <div class="container">
+    <div class="sec-header">
+      <span class="sec-tag">المميزات</span>
+      <h2 class="sec-title">مبني للألعاب من الأساس</h2>
+      <div class="sec-line"></div>
+    </div>
+    <div class="feat-grid">
+      <div class="feat-card">
+        <div class="feat-icon-wrap">⚡</div>
+        <div class="feat-card-title">Ultra Low Latency</div>
+        <div class="feat-card-desc">تقليل زمن الاستجابة إلى أقل من 5ms — تجربة ألعاب تنافسية بدون تأخير ملحوظ</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon-wrap">🧠</div>
+        <div class="feat-card-title">Smart RAM Manager</div>
+        <div class="feat-card-desc">تحرير الذاكرة تلقائياً من العمليات غير الضرورية وتخصيصها للعبة النشطة فقط</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon-wrap">🌡️</div>
+        <div class="feat-card-title">Thermal Control</div>
+        <div class="feat-card-desc">مراقبة حرارة الجهاز بشكل مستمر وتعديل الأداء تلقائياً لتجنب الـ Throttling</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon-wrap">🎮</div>
+        <div class="feat-card-title">Game Launcher</div>
+        <div class="feat-card-desc">مشغل موحد لكل ألعابك في مكان واحد مع تحميل سريع وإدارة التحديثات</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon-wrap">📡</div>
+        <div class="feat-card-title">Network Optimizer</div>
+        <div class="feat-card-desc">تقليل الـ Ping وتحسين استقرار الاتصال في الألعاب الإلكترونية التنافسية</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon-wrap">📊</div>
+        <div class="feat-card-title">Performance HUD</div>
+        <div class="feat-card-desc">شاشة معلومات شفافة تعرض FPS والحرارة وسرعة الشبكة في الوقت الفعلي</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PERFORMANCE -->
+<section class="section">
+  <div class="container">
+    <div class="perf-grid">
+      <div class="perf-visual">
+        <div class="bar-row">
+          <div class="bar-label"><span>FPS Stability</span><span>97%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:97%"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><span>RAM Efficiency</span><span>89%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:89%"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><span>Network Latency</span><span>94%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:94%"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><span>Thermal Control</span><span>91%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:91%"></div></div>
+        </div>
+        <div class="bar-row" style="margin-bottom:0">
+          <div class="bar-label"><span>Load Speed</span><span>96%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:96%"></div></div>
+        </div>
+      </div>
+      <div class="perf-content">
+        <h3>أداء استثنائي في كل موقف</h3>
+        <p>
+          SENAPI مبني من الصفر بفلسفة Gaming-First — كل سطر كود مكتوب
+          بهدف واحد: إعطاء الألعاب أولوية مطلقة على كل شيء آخر.
+        </p>
+        <p>
+          النظام يتعلم من نمط لعبك ويُحسّن إعداداته تلقائياً مع الوقت
+          ليصل إلى أعلى أداء ممكن لجهازك.
+        </p>
+        <div class="perf-tags">
+          <div class="perf-tag">DirectX 12</div>
+          <div class="perf-tag">Vulkan</div>
+          <div class="perf-tag">OpenGL ES 3.2</div>
+          <div class="perf-tag">Anti-Cheat Safe</div>
+          <div class="perf-tag">Zero Bloat</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SYSTEM REQUIREMENTS -->
+<section class="section req-section">
+  <div class="container">
+    <div class="sec-header">
+      <span class="sec-tag">متطلبات التشغيل</span>
+      <h2 class="sec-title">يعمل على معظم الأجهزة</h2>
+      <div class="sec-line"></div>
+    </div>
+    <div class="req-grid">
+
+      <div class="req-card" data-type="pc" data-label="SENAPI PC">
+        <div class="req-title">🖥️ متطلبات الكمبيوتر</div>
+        <table class="req-table">
+          <tr><td>نظام التشغيل</td><td>Windows 10 (64-bit) أو أحدث</td></tr>
+          <tr><td>المعالج</td><td>Intel Core i3 الجيل الثامن / AMD Ryzen 3 3000</td></tr>
+          <tr><td>الذاكرة RAM</td><td>4 GB (الحد الأدنى) — 8 GB (موصى به)</td></tr>
+          <tr><td>التخزين</td><td>2 GB مساحة فارغة على الأقل</td></tr>
+          <tr><td>كارت الشاشة</td><td>DirectX 11 متوافق أو أعلى</td></tr>
+          <tr><td>الشبكة</td><td>اتصال إنترنت للمميزات الإضافية</td></tr>
+        </table>
+      </div>
+
+      <div class="req-card" data-type="android" data-label="SENAPI ANDROID">
+        <div class="req-title">📱 متطلبات الأندرويد</div>
+        <table class="req-table">
+          <tr><td>نظام التشغيل</td><td>Android 8.0 Oreo أو أحدث</td></tr>
+          <tr><td>المعالج</td><td>Snapdragon 660 / Helio G85 أو ما يعادلهما</td></tr>
+          <tr><td>الذاكرة RAM</td><td>3 GB (الحد الأدنى) — 6 GB (موصى به)</td></tr>
+          <tr><td>التخزين</td><td>150 MB مساحة فارغة</td></tr>
+          <tr><td>الشاشة</td><td>60Hz أو أعلى (يدعم 90/120/144Hz)</td></tr>
+          <tr><td>الأذونات</td><td>إمكانية الوصول — لا يحتاج Root</td></tr>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- DOWNLOAD SECTION -->
+<section class="section dl-section" id="download">
+  <div class="container">
+    <div class="dl-big-title">جاهز للتحميل الآن</div>
+    <div class="dl-big-sub">اختر النسخة المناسبة لجهازك</div>
+    <div class="dl-cards">
+      <div class="dl-card pc">
+        <span class="dl-card-icon">🖥️</span>
+        <div class="dl-card-name">SENAPI PC</div>
+        <div class="dl-card-desc">Windows 10/11<br>64-bit Installer</div>
+        <a href="#" class="dl-btn" style="font-size:0.85rem;padding:12px 24px" onclick="simulateDownload('PC', this)">
+          تحميل للكمبيوتر
+        </a>
+        <div class="dl-card-size">📦 420 MB • .exe</div>
+      </div>
+      <div class="dl-card android">
+        <span class="dl-card-icon">📱</span>
+        <div class="dl-card-name">SENAPI Android</div>
+        <div class="dl-card-desc">Android 8.0+<br>APK مباشر</div>
+        <a href="#" class="dl-btn" style="font-size:0.85rem;padding:12px 24px;background:linear-gradient(135deg,var(--neon-green),var(--neon-purple))" onclick="simulateDownload('Android', this)">
+          تحميل للأندرويد
+        </a>
+        <div class="dl-card-size">📦 85 MB • .apk</div>
+      </div>
+    </div>
+    <p style="color:var(--muted);font-size:0.8rem;margin-top:32px;letter-spacing:0.05em">
+      ✅ مجاني تماماً — ✅ بدون إعلانات — ✅ بدون بيانات مستخدم — ✅ مفتوح المصدر
+    </p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">SENAPI</div>
+  <div class="footer-tagline">Gaming System — مبني للألعاب، مُحسَّن للأداء</div>
+  <div class="footer-badges">
+    <div class="f-badge">v1.0.0 Stable</div>
+    <div class="f-badge">PC + Android</div>
+    <div class="f-badge">Free & Open</div>
+    <div class="f-badge">Zero Bloatware</div>
+  </div>
+  <div class="footer-copy">© 2025 SENAPI Gaming System. All rights reserved.</div>
+</footer>
+
+<script>
+  // Simulate download interaction
+  function simulateDownload(platform, el) {
+    const originalText = el.innerHTML;
+    el.innerHTML = '⏳ جاري التحضير...';
+    el.style.opacity = '0.7';
+    setTimeout(() => {
+      el.innerHTML = '✅ جاهز للتحميل!';
+      el.style.opacity = '1';
+      el.style.background = 'linear-gradient(135deg, #39ff14, #00f5ff)';
+      setTimeout(() => {
+        el.innerHTML = originalText;
+        el.style.background = '';
+      }, 2000);
+    }, 1500);
+  }
+
+  // Animate bars on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.animationPlayState = 'running';
+      }
+    });
+  }, { threshold: 0.2 });
+
+  document.querySelectorAll('.bar-fill').forEach(bar => {
+    bar.style.animationPlayState = 'paused';
+    observer.observe(bar);
+  });
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href');
+      if (id === '#') return;
+      e.preventDefault();
+      const el = document.querySelector(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  // Cursor glow effect
+  const glow = document.createElement('div');
+  glow.style.cssText = `
+    position:fixed;width:300px;height:300px;border-radius:50%;
+    background:radial-gradient(circle,rgba(0,245,255,0.04) 0%,transparent 70%);
+    pointer-events:none;z-index:9999;transform:translate(-50%,-50%);
+    transition:all 0.3s ease;
+  `;
+  document.body.appendChild(glow);
+  document.addEventListener('mousemove', e => {
+    glow.style.left = e.clientX + 'px';
+    glow.style.top = e.clientY + 'px';
+  });
+</script>
+
+</body>
+</html>
